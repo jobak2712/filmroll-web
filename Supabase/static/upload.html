@@ -30,7 +30,6 @@ input{width:100%;padding:14px;border-radius:8px;border:1px solid #444;background
 <p style="color:#888;margin-bottom:24px" id="subtitle">Loading...</p>
 
 <div id="loading" class="loading">Loading event...</div>
-
 <div id="error" class="hidden error"></div>
 
 <div id="joinForm" class="hidden card">
@@ -62,14 +61,11 @@ input{width:100%;padding:14px;border-radius:8px;border:1px solid #444;background
 </div>
 
 <script>
-// Get join code from URL path: /upload/JOINCODE or ?code=JOINCODE
-const pathParts = window.location.pathname.split('/');
-const JOIN_CODE = pathParts[pathParts.length - 1] || new URLSearchParams(window.location.search).get('code') || '';
-
-// Supabase config - UPDATE THESE for your project
+// Get join code from URL query param only
+const JOIN_CODE = new URLSearchParams(window.location.search).get('code') || '';
 const SUPABASE_URL = 'https://zcsuxholzvaidksgxqzi.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpjc3V4aG9senZhaWRrc2d4cXppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzMzMjk3NTAsImV4cCI6MjA0ODkwNTc1MH0.hGXTNTe0vvvFHC_Shj0r2FBz_T1UhXGiP0bfSk7Y-Lk';
 
+let API_KEY = '';
 let EVENT_ID = '';
 let LIMIT = 10;
 let participantId = null;
@@ -78,12 +74,12 @@ let file = null;
 
 async function init() {
   if (!JOIN_CODE) {
-    showError('No event code provided. Use URL like: /upload/YOURCODE');
+    showError('No event code. Add ?code=YOURCODE to the URL');
     return;
   }
 
   try {
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/webUpload/${JOIN_CODE}`);
+    const res = await fetch(SUPABASE_URL + '/functions/v1/webUpload/' + JOIN_CODE);
     const data = await res.json();
     
     if (data.error) {
@@ -93,12 +89,12 @@ async function init() {
 
     EVENT_ID = data.event.id;
     LIMIT = data.event.shotLimit;
+    API_KEY = data.apiKey;
     
     document.getElementById('eventTitle').textContent = data.event.title;
     document.getElementById('subtitle').textContent = 'Upload photos from your browser';
     document.getElementById('loading').classList.add('hidden');
 
-    // Check if already joined
     participantId = localStorage.getItem('p_' + EVENT_ID);
     shots = parseInt(localStorage.getItem('s_' + EVENT_ID) || '0');
 
@@ -122,12 +118,12 @@ function showError(msg) {
 async function joinEvent() {
   const name = document.getElementById('guestName').value || 'Guest';
   try {
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/joinEvent`, {
+    const res = await fetch(SUPABASE_URL + '/functions/v1/joinEvent', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': SUPABASE_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_KEY
+        'apikey': API_KEY,
+        'Authorization': 'Bearer ' + API_KEY
       },
       body: JSON.stringify({ join_code: JOIN_CODE, guest_name: name })
     });
@@ -176,7 +172,7 @@ async function uploadPhoto() {
   fd.append('participant_id', participantId);
   
   try {
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/webUpload`, { method: 'POST', body: fd });
+    const res = await fetch(SUPABASE_URL + '/functions/v1/webUpload', { method: 'POST', body: fd });
     const data = await res.json();
     
     if (data.success) {
