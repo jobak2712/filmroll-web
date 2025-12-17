@@ -29,6 +29,9 @@ h1{font-size:20px;margin-bottom:4px}
 .modal-close{position:absolute;top:20px;right:20px;font-size:32px;color:#fff;cursor:pointer;background:none;border:none}
 .photo-count{text-align:center;color:#888;padding:16px;font-size:14px}
 .back-btn{display:inline-flex;align-items:center;gap:8px;color:#FF6B35;text-decoration:none;padding:12px 0}
+.download-all{background:#FF6B35;color:#fff;border:none;padding:14px 24px;border-radius:25px;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;margin:16px auto}
+.download-all:disabled{opacity:0.6;cursor:not-allowed}
+.download-progress{text-align:center;color:#888;font-size:13px;margin-top:8px}
 </style>
 </head>
 <body>
@@ -54,6 +57,10 @@ h1{font-size:20px;margin-bottom:4px}
 
 <div id="gallery" style="display:none">
 <p class="photo-count" id="photoCount"></p>
+<button class="download-all" id="downloadAllBtn" onclick="downloadAll()">
+  <span>⬇️</span> Download All Photos
+</button>
+<div id="downloadProgress" class="download-progress" style="display:none"></div>
 <div class="photo-grid" id="photoGrid"></div>
 </div>
 
@@ -186,7 +193,10 @@ function showCountdown(revealTime) {
   countdownInterval = setInterval(updateCountdown, 1000);
 }
 
+let allPhotos = [];
+
 function showGallery(photos) {
+  allPhotos = photos;
   document.getElementById('gallery').style.display = 'block';
   document.getElementById('photoCount').textContent = photos.length + ' photos';
   
@@ -201,6 +211,53 @@ function showGallery(photos) {
     div.innerHTML = `<img src="${photo.url}" loading="lazy" onclick="openModal('${photo.url}')">`;
     grid.appendChild(div);
   });
+}
+
+async function downloadAll() {
+  if (allPhotos.length === 0) return;
+  
+  const btn = document.getElementById('downloadAllBtn');
+  const progress = document.getElementById('downloadProgress');
+  
+  btn.disabled = true;
+  btn.innerHTML = '<span>⏳</span> Downloading...';
+  progress.style.display = 'block';
+  
+  let downloaded = 0;
+  
+  for (const photo of allPhotos) {
+    if (!photo.url) continue;
+    
+    try {
+      progress.textContent = `Downloading ${downloaded + 1} of ${allPhotos.length}...`;
+      
+      const response = await fetch(photo.url);
+      const blob = await response.blob();
+      
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `filmroll_${photo.id || downloaded}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+      
+      downloaded++;
+      
+      // Small delay between downloads
+      await new Promise(r => setTimeout(r, 300));
+    } catch (e) {
+      console.error('Failed to download:', e);
+    }
+  }
+  
+  btn.disabled = false;
+  btn.innerHTML = '<span>⬇️</span> Download All Photos';
+  progress.textContent = `✅ Downloaded ${downloaded} photos!`;
+  
+  setTimeout(() => {
+    progress.style.display = 'none';
+  }, 3000);
 }
 
 function openModal(url) {
