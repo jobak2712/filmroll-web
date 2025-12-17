@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FilmRoll - Gallery</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,sans-serif;background:#1a1a1a;color:#fff;min-height:100vh}
+.header{padding:20px;text-align:center;border-bottom:1px solid #333}
+.logo{font-size:32px;margin-bottom:8px}
+h1{font-size:20px;margin-bottom:4px}
+.subtitle{color:#888;font-size:14px}
+.container{max-width:800px;margin:0 auto;padding:20px}
+.loading{text-align:center;padding:60px}
+.error{text-align:center;padding:40px;color:#ff4444}
+.countdown-card{background:rgba(255,107,53,0.15);border:1px solid #FF6B35;border-radius:16px;padding:32px;text-align:center;margin:20px 0}
+.countdown{font-size:48px;color:#FF6B35;font-weight:bold;margin:16px 0}
+.countdown-label{color:#888;font-size:14px}
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.photo-item{aspect-ratio:1;overflow:hidden;border-radius:8px;cursor:pointer;background:#333}
+.photo-item img{width:100%;height:100%;object-fit:cover;transition:transform 0.2s}
+.photo-item:hover img{transform:scale(1.05)}
+.empty{text-align:center;padding:60px;color:#888}
+.empty-icon{font-size:64px;margin-bottom:16px}
+.modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.95);display:none;align-items:center;justify-content:center;z-index:100}
+.modal.active{display:flex}
+.modal img{max-width:90%;max-height:90%;border-radius:8px}
+.modal-close{position:absolute;top:20px;right:20px;font-size:32px;color:#fff;cursor:pointer;background:none;border:none}
+.photo-count{text-align:center;color:#888;padding:16px;font-size:14px}
+.back-btn{display:inline-flex;align-items:center;gap:8px;color:#FF6B35;text-decoration:none;padding:12px 0}
+</style>
+</head>
+<body>
+<div class="header">
+<div class="logo">📸</div>
+<h1 id="eventTitle">FilmRoll Gallery</h1>
+<p class="subtitle" id="subtitle">Loading...</p>
+</div>
+
+<div class="container">
+<a href="#" class="back-btn" id="backBtn" style="display:none">← Back to Upload</a>
+
+<div id="loading" class="loading">Loading photos...</div>
+<div id="error" class="error" style="display:none"></div>
+
+<div id="countdown" class="countdown-card" style="display:none">
+<div style="font-size:48px">🎬</div>
+<h2>Photos Not Yet Revealed</h2>
+<div class="countdown" id="countdownTimer">--:--:--</div>
+<p class="countdown-label" id="revealDate"></p>
+<p style="margin-top:16px;color:#888">Check back after the reveal time to see all photos!</p>
+</div>
+
+<div id="gallery" style="display:none">
+<p class="photo-count" id="photoCount"></p>
+<div class="photo-grid" id="photoGrid"></div>
+</div>
+
+<div id="empty" class="empty" style="display:none">
+<div class="empty-icon">📷</div>
+<h2>No Photos Yet</h2>
+<p>Photos will appear here once they're captured.</p>
+</div>
+</div>
+
+<div class="modal" id="modal" onclick="closeModal()">
+<button class="modal-close" onclick="closeModal()">×</button>
+<img id="modalImg" src="">
+</div>
+
+<script>
+const JOIN_CODE = new URLSearchParams(window.location.search).get('code') || '';
+const SUPABASE_URL = 'https://zcsuxholzvaidksgxqzi.supabase.co';
+
+let API_KEY = '';
+let EVENT_ID = '';
+let REVEAL_TIME = null;
+let countdownInterval = null;
+
+async function init() {
+  if (!JOIN_CODE) {
+    showError('No event code provided');
+    return;
+  }
+
+  // Set back button
+  const backBtn = document.getElementById('backBtn');
+  backBtn.href = window.location.pathname.replace('gallery.html', 'upload.html') + '?code=' + JOIN_CODE;
+  backBtn.style.display = 'inline-flex';
+
+  try {
+    // Get event info
+    const res = await fetch(SUPABASE_URL + '/functions/v1/webUpload/' + JOIN_CODE);
+    const data = await res.json();
+    
+    if (data.error) {
+      showError(data.error);
+      return;
+    }
+
+    EVENT_ID = data.event.id;
+    API_KEY = data.apiKey;
+    REVEAL_TIME = data.event.revealTime;
+    
+    document.getElementById('eventTitle').textContent = data.event.title;
+    document.getElementById('subtitle').textContent = 'Event Gallery';
+
+    // Try to load photos
+    await loadPhotos(data.event.isRevealed, data.event.revealMode);
+  } catch (e) {
+    showError('Failed to load: ' + e.message);
+  }
+}
+
+async function loadPhotos(isRevealed, revealMode) {
+  document.getElementById('loading').style.display = 'none';
+
+  try {
+    const res = await fetch(
+      SUPABASE_URL + '/functions/v1/getEventPhotos?event_id=' + EVENT_ID + '&is_host=false',
+      {
+        headers: {
+          'apikey': API_KEY,
+          'Authorization': 'Bearer ' + API_KEY
+        }
+      }
+    );
+    
+    const data = await res.json();
+    
+    if (res.status === 403 && data.error === 'Photos are not yet revealed') {
+      // Show countdown
+      showCountdown(data.reveal_time);
+      return;
+    }
+    
+    if (data.photos && data.photos.length > 0) {
+      showGallery(data.photos);
+    } else {
+      document.getElementById('empty').style.display = 'block';
+    }
+  } catch (e) {
+    // If error, check if it's because not revealed
+    if (REVEAL_TIME && new Date(REVEAL_TIME) > new Date()) {
+      showCountdown(REVEAL_TIME);
+    } else {
+      showError('Failed to load photos');
+    }
+  }
+}
+
+function showCountdown(revealTime) {
+  document.getElementById('countdown').style.display = 'block';
+  
+  const revealDate = new Date(revealTime);
+  document.getElementById('revealDate').textContent = 
+    'Reveal: ' + revealDate.toLocaleDateString() + ' at ' + 
+    revealDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+  
+  function updateCountdown() {
+    const now = new Date();
+    const diff = revealDate - now;
+    
+    if (diff <= 0) {
+      clearInterval(countdownInterval);
+      location.reload(); // Refresh to load photos
+      return;
+    }
+    
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const secs = Math.floor((diff % (1000 * 60)) / 1000);
+    
+    let text = '';
+    if (days > 0) text += days + 'd ';
+    text += String(hours).padStart(2, '0') + ':';
+    text += String(mins).padStart(2, '0') + ':';
+    text += String(secs).padStart(2, '0');
+    
+    document.getElementById('countdownTimer').textContent = text;
+  }
+  
+  updateCountdown();
+  countdownInterval = setInterval(updateCountdown, 1000);
+}
+
+function showGallery(photos) {
+  document.getElementById('gallery').style.display = 'block';
+  document.getElementById('photoCount').textContent = photos.length + ' photos';
+  
+  const grid = document.getElementById('photoGrid');
+  grid.innerHTML = '';
+  
+  photos.forEach(photo => {
+    if (!photo.url) return;
+    
+    const div = document.createElement('div');
+    div.className = 'photo-item';
+    div.innerHTML = `<img src="${photo.url}" loading="lazy" onclick="openModal('${photo.url}')">`;
+    grid.appendChild(div);
+  });
+}
+
+function openModal(url) {
+  event.stopPropagation();
+  document.getElementById('modalImg').src = url;
+  document.getElementById('modal').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('active');
+}
+
+function showError(msg) {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('error').textContent = msg;
+  document.getElementById('error').style.display = 'block';
+}
+
+// Close modal on escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeModal();
+});
+
+init();
+</script>
+</body>
+</html>
