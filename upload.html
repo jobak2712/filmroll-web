@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FilmRoll - Upload Photos</title>
+<title>FilmRoll - Upload Photos & Videos</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,sans-serif;background:#1a1a1a;color:#fff;min-height:100vh;padding:24px}
@@ -11,13 +11,15 @@ body{font-family:-apple-system,sans-serif;background:#1a1a1a;color:#fff;min-heig
 .logo{font-size:64px;margin:32px 0}
 h1{margin-bottom:16px}
 .card{background:rgba(255,255,255,0.1);border-radius:16px;padding:24px;margin:20px 0}
-input{width:100%;padding:14px;border-radius:8px;border:1px solid #444;background:#333;color:#fff;font-size:16px;margin-bottom:16px}
+input[type="text"]{width:100%;padding:14px;border-radius:8px;border:1px solid #444;background:#333;color:#fff;font-size:16px;margin-bottom:16px}
 .btn{width:100%;padding:16px;border-radius:12px;border:none;background:#FF6B35;color:#fff;font-size:17px;font-weight:600;cursor:pointer}
 .btn:disabled{opacity:0.5}
 .btn-secondary{background:#333;border:1px solid #555}
-.upload-area{border:2px dashed #555;border-radius:12px;padding:40px;cursor:pointer;margin-bottom:16px}
-.upload-area.has-photo{border-color:#4CAF50;border-style:solid}
-#preview{max-width:100%;border-radius:8px;margin-top:16px;display:none}
+.btn-row{display:flex;gap:12px;margin-bottom:16px}
+.btn-row .btn{flex:1}
+.upload-area{border:2px dashed #555;border-radius:12px;padding:40px;cursor:pointer;margin-bottom:16px;transition:all 0.2s}
+.upload-area:hover{border-color:#FF6B35;background:rgba(255,107,53,0.05)}
+.upload-area.has-files{border-color:#4CAF50;border-style:solid;padding:20px}
 .hidden{display:none}
 .shots{font-size:32px;color:#FF6B35;font-weight:bold}
 .error{color:#ff4444;padding:20px}
@@ -29,6 +31,19 @@ input{width:100%;padding:14px;border-radius:8px;border:1px solid #444;background
 .gallery-link{background:#333;border-radius:8px;padding:12px;margin-top:12px;word-break:break-all;font-size:12px;color:#888}
 .copy-btn{background:#FF6B35;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;cursor:pointer;margin-top:8px}
 .instant-badge{background:#4CAF50;color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;display:inline-block;margin-bottom:8px}
+.preview-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+.preview-item{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;background:#333}
+.preview-item img,.preview-item video{width:100%;height:100%;object-fit:cover}
+.preview-item .remove{position:absolute;top:4px;right:4px;width:24px;height:24px;background:rgba(0,0,0,0.7);border-radius:50%;border:none;color:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.preview-item .video-badge{position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,0.7);color:#fff;padding:2px 6px;border-radius:4px;font-size:10px}
+.progress-bar{width:100%;height:8px;background:#333;border-radius:4px;overflow:hidden;margin:16px 0}
+.progress-bar-fill{height:100%;background:#FF6B35;transition:width 0.3s}
+.upload-options{display:flex;gap:8px;justify-content:center;margin-bottom:16px}
+.upload-option{flex:1;padding:16px;background:#333;border-radius:12px;border:2px solid transparent;cursor:pointer;transition:all 0.2s}
+.upload-option:hover{border-color:#FF6B35}
+.upload-option.active{border-color:#FF6B35;background:rgba(255,107,53,0.1)}
+.upload-option-icon{font-size:32px;margin-bottom:8px}
+.upload-option-text{font-size:12px;color:#888}
 </style>
 </head>
 <body>
@@ -51,28 +66,52 @@ input{width:100%;padding:14px;border-radius:8px;border:1px solid #444;background
 <p style="color:#888">photos remaining</p>
 </div>
 
-<!-- Reveal Info Card -->
 <div id="revealInfo" class="reveal-info hidden">
 <h3>📅 WHEN CAN I SEE THE PHOTOS?</h3>
 <div id="revealContent"></div>
 </div>
 
 <div class="card">
-<div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
-<div style="font-size:48px">📷</div>
-<p id="uploadText">Tap to select photo</p>
-<img id="preview">
+<!-- Upload Options -->
+<div class="upload-options">
+<div class="upload-option active" onclick="setUploadMode('camera')" id="optCamera">
+<div class="upload-option-icon">📷</div>
+<div class="upload-option-text">Take Photo</div>
 </div>
-<input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none" onchange="selectPhoto(event)">
-<button class="btn" id="uploadBtn" onclick="uploadPhoto()" disabled>Send Photo</button>
+<div class="upload-option" onclick="setUploadMode('gallery')" id="optGallery">
+<div class="upload-option-icon">🖼️</div>
+<div class="upload-option-text">From Gallery</div>
+</div>
+</div>
+
+<div class="upload-area" id="uploadArea" onclick="triggerFileInput()">
+<div style="font-size:48px" id="uploadIcon">📷</div>
+<p id="uploadText">Tap to take photo</p>
+</div>
+
+<!-- Camera input (single photo) -->
+<input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" onchange="selectFiles(event)">
+<!-- Gallery input (multiple photos/videos) -->
+<input type="file" id="galleryInput" accept="image/*,video/*" multiple style="display:none" onchange="selectFiles(event)">
+
+<!-- Preview Grid -->
+<div id="previewGrid" class="preview-grid hidden"></div>
+
+<!-- Progress Bar -->
+<div id="progressContainer" class="hidden">
+<div class="progress-bar"><div class="progress-bar-fill" id="progressBar"></div></div>
+<p id="progressText" style="font-size:13px;color:#888">Uploading...</p>
+</div>
+
+<button class="btn" id="uploadBtn" onclick="uploadFiles()" disabled>Send Photo</button>
 </div>
 </div>
 
 <div id="successMsg" class="hidden card">
 <div style="font-size:64px">✅</div>
-<h2>Photo Sent!</h2>
+<h2 id="successTitle">Photo Sent!</h2>
 <div id="successRevealInfo" class="reveal-info" style="margin-top:16px"></div>
-<button class="btn" onclick="reset()" style="margin-top:16px">Take Another</button>
+<button class="btn" onclick="reset()" style="margin-top:16px">Upload More</button>
 <button class="btn btn-secondary" onclick="viewGallery()" style="margin-top:8px" id="viewGalleryBtn">View Gallery</button>
 </div>
 </div>
@@ -80,6 +119,7 @@ input{width:100%;padding:14px;border-radius:8px;border:1px solid #444;background
 <script>
 const JOIN_CODE = new URLSearchParams(window.location.search).get('code') || '';
 const SUPABASE_URL = 'https://zcsuxholzvaidksgxqzi.supabase.co';
+const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpjc3V4aG9senZhaWRrc2d4cXppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2MjU5MjcsImV4cCI6MjA4MTIwMTkyN30.XuJqC8xso2nD3aaO0EMe7vIy67UVgQVD7_kkdE6wUDo';
 
 let API_KEY = '';
 let EVENT_ID = '';
@@ -89,7 +129,8 @@ let REVEAL_TIME = null;
 let IS_REVEALED = false;
 let participantId = null;
 let shots = 0;
-let file = null;
+let selectedFiles = [];
+let uploadMode = 'camera'; // 'camera' or 'gallery'
 
 async function init() {
   if (!JOIN_CODE) {
@@ -98,19 +139,12 @@ async function init() {
   }
 
   try {
-    const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpjc3V4aG9senZhaWRrc2d4cXppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2MjU5MjcsImV4cCI6MjA4MTIwMTkyN30.XuJqC8xso2nD3aaO0EMe7vIy67UVgQVD7_kkdE6wUDo';
     const res = await fetch(SUPABASE_URL + '/functions/v1/webUpload/' + JOIN_CODE, {
-      headers: {
-        'apikey': ANON_KEY,
-        'Authorization': 'Bearer ' + ANON_KEY
-      }
+      headers: { 'apikey': ANON_KEY, 'Authorization': 'Bearer ' + ANON_KEY }
     });
     const data = await res.json();
     
-    if (data.error) {
-      showError(data.error);
-      return;
-    }
+    if (data.error) { showError(data.error); return; }
 
     EVENT_ID = data.event.id;
     LIMIT = data.event.shotLimit;
@@ -138,6 +172,192 @@ async function init() {
   }
 }
 
+function setUploadMode(mode) {
+  uploadMode = mode;
+  document.getElementById('optCamera').classList.toggle('active', mode === 'camera');
+  document.getElementById('optGallery').classList.toggle('active', mode === 'gallery');
+  
+  if (mode === 'camera') {
+    document.getElementById('uploadIcon').textContent = '📷';
+    document.getElementById('uploadText').textContent = 'Tap to take photo';
+  } else {
+    document.getElementById('uploadIcon').textContent = '🖼️';
+    document.getElementById('uploadText').textContent = 'Tap to select photos & videos';
+  }
+}
+
+function triggerFileInput() {
+  if (uploadMode === 'camera') {
+    document.getElementById('cameraInput').click();
+  } else {
+    document.getElementById('galleryInput').click();
+  }
+}
+
+function selectFiles(e) {
+  const files = Array.from(e.target.files);
+  const remaining = LIMIT - shots;
+  
+  // Limit selection to remaining shots
+  const filesToAdd = files.slice(0, remaining - selectedFiles.length);
+  
+  filesToAdd.forEach(file => {
+    if (selectedFiles.length < remaining) {
+      selectedFiles.push(file);
+    }
+  });
+  
+  updatePreview();
+}
+
+function updatePreview() {
+  const grid = document.getElementById('previewGrid');
+  const area = document.getElementById('uploadArea');
+  const btn = document.getElementById('uploadBtn');
+  
+  if (selectedFiles.length === 0) {
+    grid.classList.add('hidden');
+    area.classList.remove('has-files');
+    btn.disabled = true;
+    btn.textContent = 'Send Photo';
+    return;
+  }
+  
+  grid.classList.remove('hidden');
+  area.classList.add('has-files');
+  btn.disabled = false;
+  
+  const photoCount = selectedFiles.filter(f => f.type.startsWith('image/')).length;
+  const videoCount = selectedFiles.filter(f => f.type.startsWith('video/')).length;
+  
+  let btnText = 'Send ';
+  if (photoCount > 0 && videoCount > 0) {
+    btnText += `${photoCount} Photo${photoCount > 1 ? 's' : ''} & ${videoCount} Video${videoCount > 1 ? 's' : ''}`;
+  } else if (videoCount > 0) {
+    btnText += `${videoCount} Video${videoCount > 1 ? 's' : ''}`;
+  } else {
+    btnText += `${photoCount} Photo${photoCount > 1 ? 's' : ''}`;
+  }
+  btn.textContent = btnText;
+  
+  grid.innerHTML = '';
+  selectedFiles.forEach((file, index) => {
+    const item = document.createElement('div');
+    item.className = 'preview-item';
+    
+    const isVideo = file.type.startsWith('video/');
+    
+    if (isVideo) {
+      const video = document.createElement('video');
+      video.src = URL.createObjectURL(file);
+      video.muted = true;
+      item.appendChild(video);
+      
+      const badge = document.createElement('div');
+      badge.className = 'video-badge';
+      badge.textContent = '🎬 Video';
+      item.appendChild(badge);
+    } else {
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(file);
+      item.appendChild(img);
+    }
+    
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'remove';
+    removeBtn.innerHTML = '×';
+    removeBtn.onclick = (e) => { e.stopPropagation(); removeFile(index); };
+    item.appendChild(removeBtn);
+    
+    grid.appendChild(item);
+  });
+}
+
+function removeFile(index) {
+  selectedFiles.splice(index, 1);
+  updatePreview();
+}
+
+async function uploadFiles() {
+  if (selectedFiles.length === 0 || !participantId) return;
+  
+  const btn = document.getElementById('uploadBtn');
+  const progress = document.getElementById('progressContainer');
+  const progressBar = document.getElementById('progressBar');
+  const progressText = document.getElementById('progressText');
+  
+  btn.disabled = true;
+  progress.classList.remove('hidden');
+  
+  let uploaded = 0;
+  let failed = 0;
+  
+  for (let i = 0; i < selectedFiles.length; i++) {
+    const file = selectedFiles[i];
+    progressText.textContent = `Uploading ${i + 1} of ${selectedFiles.length}...`;
+    progressBar.style.width = ((i / selectedFiles.length) * 100) + '%';
+    
+    const fd = new FormData();
+    fd.append('photo', file);
+    fd.append('event_id', EVENT_ID);
+    fd.append('participant_id', participantId);
+    
+    try {
+      const res = await fetch(SUPABASE_URL + '/functions/v1/webUpload', { 
+        method: 'POST', 
+        body: fd,
+        headers: { 'apikey': ANON_KEY, 'Authorization': 'Bearer ' + ANON_KEY }
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        uploaded++;
+        shots++;
+      } else {
+        failed++;
+      }
+    } catch (e) {
+      failed++;
+    }
+  }
+  
+  localStorage.setItem('s_' + EVENT_ID, shots);
+  progressBar.style.width = '100%';
+  
+  // Show success
+  progress.classList.add('hidden');
+  document.getElementById('uploadForm').classList.add('hidden');
+  document.getElementById('successMsg').classList.remove('hidden');
+  
+  // Update success message
+  const successTitle = document.getElementById('successTitle');
+  if (uploaded > 1) {
+    successTitle.textContent = `${uploaded} Files Uploaded!`;
+  } else {
+    successTitle.textContent = 'Photo Sent!';
+  }
+  
+  if (failed > 0) {
+    successTitle.textContent += ` (${failed} failed)`;
+  }
+  
+  // Show reveal info
+  const successReveal = document.getElementById('successRevealInfo');
+  const galleryUrl = window.location.origin + window.location.pathname.replace('upload.html', 'gallery.html') + '?code=' + JOIN_CODE;
+  
+  if (REVEAL_MODE === 'instant' || IS_REVEALED) {
+    successReveal.innerHTML = `<p>📸 Your photos are live! <a href="${galleryUrl}" style="color:#FF6B35">View Gallery →</a></p>`;
+    document.getElementById('viewGalleryBtn').classList.remove('hidden');
+  } else if (REVEAL_TIME) {
+    const revealDate = new Date(REVEAL_TIME);
+    successReveal.innerHTML = `
+      <p>📅 Photos reveal on <strong>${revealDate.toLocaleDateString()}</strong></p>
+      <p style="font-size:12px;margin-top:8px">Save this link: <span style="color:#FF6B35">${galleryUrl}</span></p>
+    `;
+    document.getElementById('viewGalleryBtn').classList.add('hidden');
+  }
+}
+
 function showRevealInfo() {
   const revealInfo = document.getElementById('revealInfo');
   const revealContent = document.getElementById('revealContent');
@@ -156,7 +376,6 @@ function showRevealInfo() {
     const diff = revealDate - now;
     
     if (diff <= 0) {
-      // Already revealed
       revealContent.innerHTML = `
         <span class="instant-badge">🎉 Photos Revealed!</span>
         <p>Photos are now visible! View them here:</p>
@@ -164,7 +383,6 @@ function showRevealInfo() {
         <button class="copy-btn" onclick="copyLink('${galleryUrl}')">📋 Copy Link</button>
       `;
     } else {
-      // Countdown
       const days = Math.floor(diff / (1000 * 60 * 60 * 24));
       const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -209,8 +427,8 @@ async function joinEvent() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': API_KEY,
-        'Authorization': 'Bearer ' + API_KEY
+        'apikey': ANON_KEY,
+        'Authorization': 'Bearer ' + ANON_KEY
       },
       body: JSON.stringify({ join_code: JOIN_CODE, guest_name: name })
     });
@@ -233,83 +451,21 @@ async function joinEvent() {
   }
 }
 
-function selectPhoto(e) {
-  file = e.target.files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = function(ev) {
-      document.getElementById('preview').src = ev.target.result;
-      document.getElementById('preview').style.display = 'block';
-      document.getElementById('uploadArea').classList.add('has-photo');
-      document.getElementById('uploadText').textContent = 'Photo selected';
-      document.getElementById('uploadBtn').disabled = false;
-    };
-    reader.readAsDataURL(file);
-  }
-}
-
-async function uploadPhoto() {
-  if (!file || !participantId || shots >= LIMIT) return;
-  
-  document.getElementById('uploadBtn').disabled = true;
-  document.getElementById('uploadBtn').textContent = 'Uploading...';
-  
-  const fd = new FormData();
-  fd.append('photo', file);
-  fd.append('event_id', EVENT_ID);
-  fd.append('participant_id', participantId);
-  
-  try {
-    const res = await fetch(SUPABASE_URL + '/functions/v1/webUpload', { method: 'POST', body: fd });
-    const data = await res.json();
-    
-    if (data.success) {
-      shots++;
-      localStorage.setItem('s_' + EVENT_ID, shots);
-      
-      // Show success with reveal info
-      const successReveal = document.getElementById('successRevealInfo');
-      const galleryUrl = window.location.origin + window.location.pathname.replace('upload.html', 'gallery.html') + '?code=' + JOIN_CODE;
-      
-      if (REVEAL_MODE === 'instant' || IS_REVEALED) {
-        successReveal.innerHTML = `<p>📸 Your photo is live! <a href="${galleryUrl}" style="color:#FF6B35">View Gallery →</a></p>`;
-        document.getElementById('viewGalleryBtn').classList.remove('hidden');
-      } else if (REVEAL_TIME) {
-        const revealDate = new Date(REVEAL_TIME);
-        successReveal.innerHTML = `
-          <p>📅 Photos reveal on <strong>${revealDate.toLocaleDateString()}</strong></p>
-          <p style="font-size:12px;margin-top:8px">Save this link: <span style="color:#FF6B35">${galleryUrl}</span></p>
-        `;
-        document.getElementById('viewGalleryBtn').classList.add('hidden');
-      }
-      
-      document.getElementById('uploadForm').classList.add('hidden');
-      document.getElementById('successMsg').classList.remove('hidden');
-    } else {
-      alert(data.error || 'Upload failed');
-      document.getElementById('uploadBtn').disabled = false;
-      document.getElementById('uploadBtn').textContent = 'Send Photo';
-    }
-  } catch (e) {
-    alert('Error: ' + e.message);
-    document.getElementById('uploadBtn').disabled = false;
-    document.getElementById('uploadBtn').textContent = 'Send Photo';
-  }
-}
-
 function viewGallery() {
   const galleryUrl = window.location.origin + window.location.pathname.replace('upload.html', 'gallery.html') + '?code=' + JOIN_CODE;
   window.location.href = galleryUrl;
 }
 
 function reset() {
-  file = null;
-  document.getElementById('fileInput').value = '';
-  document.getElementById('preview').style.display = 'none';
-  document.getElementById('uploadArea').classList.remove('has-photo');
-  document.getElementById('uploadText').textContent = 'Tap to select photo';
+  selectedFiles = [];
+  document.getElementById('cameraInput').value = '';
+  document.getElementById('galleryInput').value = '';
+  document.getElementById('previewGrid').innerHTML = '';
+  document.getElementById('previewGrid').classList.add('hidden');
+  document.getElementById('uploadArea').classList.remove('has-files');
   document.getElementById('uploadBtn').disabled = true;
   document.getElementById('uploadBtn').textContent = 'Send Photo';
+  document.getElementById('progressContainer').classList.add('hidden');
   document.getElementById('successMsg').classList.add('hidden');
   document.getElementById('uploadForm').classList.remove('hidden');
   updateShots();
