@@ -43,9 +43,10 @@ input[type="text"]::placeholder{color:#666}
   gap:12px;
   box-shadow:0 6px 30px rgba(255,107,53,0.4);
   transition:transform 0.1s,box-shadow 0.2s;
+  -webkit-tap-highlight-color:transparent;
 }
 .snap-btn:active{transform:scale(0.97);box-shadow:0 3px 15px rgba(255,107,53,0.3)}
-.snap-btn:disabled{opacity:0.5;cursor:not-allowed}
+.snap-btn.disabled{opacity:0.5;pointer-events:none}
 .snap-btn .icon{font-size:28px}
 .snap-hint{color:#666;font-size:13px;margin-top:12px}
 
@@ -100,15 +101,15 @@ input[type="text"]::placeholder{color:#666}
 <div class="shots-label">photos remaining</div>
 </div>
 
-<!-- THE SNAP BUTTON -->
-<button class="snap-btn" id="snapBtn" onclick="document.getElementById('fileInput').click()">
+<!-- THE SNAP BUTTON - Using label for better iOS compatibility -->
+<label for="fileInput" class="snap-btn" id="snapBtn">
 <span class="icon">📷</span>
 <span>Snap</span>
-</button>
+</label>
 <p class="snap-hint">Select photos & videos from your gallery</p>
 
 <!-- Hidden file input - accepts photos AND videos, multiple selection -->
-<input type="file" id="fileInput" accept="image/*,video/*" multiple style="display:none" onchange="handleFileSelect(event)">
+<input type="file" id="fileInput" accept="image/*,video/*" multiple style="position:absolute;left:-9999px" onchange="handleFileSelect(event)">
 </div>
 
 <!-- Reveal Info -->
@@ -433,7 +434,12 @@ function reset() {
 function updateShots() {
   const remaining = LIMIT - shots;
   document.getElementById('shots').textContent = remaining;
-  document.getElementById('snapBtn').disabled = remaining <= 0;
+  const snapBtn = document.getElementById('snapBtn');
+  if (remaining <= 0) {
+    snapBtn.classList.add('disabled');
+  } else {
+    snapBtn.classList.remove('disabled');
+  }
 }
 
 init();
