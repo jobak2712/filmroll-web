@@ -2,117 +2,142 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>FilmRoll - Upload Photos & Videos</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,sans-serif;background:#1a1a1a;color:#fff;min-height:100vh;padding:24px}
-.container{max-width:500px;margin:0 auto;text-align:center}
-.logo{font-size:64px;margin:32px 0}
-h1{margin-bottom:16px}
-.card{background:rgba(255,255,255,0.1);border-radius:16px;padding:24px;margin:20px 0}
-input[type="text"]{width:100%;padding:14px;border-radius:8px;border:1px solid #444;background:#333;color:#fff;font-size:16px;margin-bottom:16px}
-.btn{width:100%;padding:16px;border-radius:12px;border:none;background:#FF6B35;color:#fff;font-size:17px;font-weight:600;cursor:pointer}
-.btn:disabled{opacity:0.5}
-.btn-secondary{background:#333;border:1px solid #555}
-.btn-row{display:flex;gap:12px;margin-bottom:16px}
-.btn-row .btn{flex:1}
-.upload-area{border:2px dashed #555;border-radius:12px;padding:40px;cursor:pointer;margin-bottom:16px;transition:all 0.2s}
-.upload-area:hover{border-color:#FF6B35;background:rgba(255,107,53,0.05)}
-.upload-area.has-files{border-color:#4CAF50;border-style:solid;padding:20px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#1a1a1a;color:#fff;min-height:100vh;padding:20px}
+.container{max-width:420px;margin:0 auto;text-align:center}
+.logo{font-size:56px;margin:24px 0 16px}
+h1{font-size:28px;margin-bottom:8px;font-weight:700}
+.subtitle{color:#888;margin-bottom:24px;font-size:15px}
+.card{background:rgba(255,255,255,0.08);border-radius:20px;padding:24px;margin:16px 0}
+input[type="text"]{width:100%;padding:16px;border-radius:12px;border:1px solid #444;background:#2a2a2a;color:#fff;font-size:17px;margin-bottom:16px}
+input[type="text"]::placeholder{color:#666}
+.btn{width:100%;padding:18px;border-radius:14px;border:none;font-size:18px;font-weight:600;cursor:pointer;transition:transform 0.1s,opacity 0.2s}
+.btn:active{transform:scale(0.98)}
+.btn-primary{background:linear-gradient(135deg,#FF6B35,#FF8F5A);color:#fff;box-shadow:0 4px 20px rgba(255,107,53,0.3)}
+.btn-primary:disabled{opacity:0.5}
+.btn-secondary{background:#2a2a2a;color:#fff;border:1px solid #444;margin-top:12px}
 .hidden{display:none}
-.shots{font-size:32px;color:#FF6B35;font-weight:bold}
-.error{color:#ff4444;padding:20px}
-.loading{padding:40px}
-.reveal-info{background:rgba(255,107,53,0.15);border:1px solid #FF6B35;border-radius:12px;padding:16px;margin:16px 0;text-align:left}
-.reveal-info h3{color:#FF6B35;margin-bottom:8px;font-size:14px}
-.reveal-info p{color:#ccc;font-size:13px;line-height:1.5}
-.countdown{font-size:24px;color:#FF6B35;font-weight:bold;margin:8px 0}
-.gallery-link{background:#333;border-radius:8px;padding:12px;margin-top:12px;word-break:break-all;font-size:12px;color:#888}
-.copy-btn{background:#FF6B35;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;cursor:pointer;margin-top:8px}
-.instant-badge{background:#4CAF50;color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;display:inline-block;margin-bottom:8px}
-.preview-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
-.preview-item{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;background:#333}
+.shots-display{margin-bottom:20px}
+.shots-number{font-size:48px;font-weight:800;color:#FF6B35;line-height:1}
+.shots-label{color:#888;font-size:14px;margin-top:4px}
+.error{color:#ff4444;padding:20px;background:rgba(255,68,68,0.1);border-radius:12px}
+.loading{padding:40px;color:#888}
+
+/* Snap Button - THE MAIN ACTION */
+.snap-btn{
+  width:100%;
+  padding:24px;
+  border-radius:16px;
+  border:none;
+  background:linear-gradient(135deg,#FF6B35,#FF8F5A);
+  color:#fff;
+  font-size:20px;
+  font-weight:700;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  box-shadow:0 6px 30px rgba(255,107,53,0.4);
+  transition:transform 0.1s,box-shadow 0.2s;
+}
+.snap-btn:active{transform:scale(0.97);box-shadow:0 3px 15px rgba(255,107,53,0.3)}
+.snap-btn:disabled{opacity:0.5;cursor:not-allowed}
+.snap-btn .icon{font-size:28px}
+.snap-hint{color:#666;font-size:13px;margin-top:12px}
+
+/* Preview Grid */
+.preview-section{margin-top:20px}
+.preview-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.preview-item{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;background:#2a2a2a}
 .preview-item img,.preview-item video{width:100%;height:100%;object-fit:cover}
-.preview-item .remove{position:absolute;top:4px;right:4px;width:24px;height:24px;background:rgba(0,0,0,0.7);border-radius:50%;border:none;color:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.preview-item .video-badge{position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,0.7);color:#fff;padding:2px 6px;border-radius:4px;font-size:10px}
-.progress-bar{width:100%;height:8px;background:#333;border-radius:4px;overflow:hidden;margin:16px 0}
-.progress-bar-fill{height:100%;background:#FF6B35;transition:width 0.3s}
-.upload-options{display:flex;gap:8px;justify-content:center;margin-bottom:16px}
-.upload-option{flex:1;padding:16px;background:#333;border-radius:12px;border:2px solid transparent;cursor:pointer;transition:all 0.2s}
-.upload-option:hover{border-color:#FF6B35}
-.upload-option.active{border-color:#FF6B35;background:rgba(255,107,53,0.1)}
-.upload-option-icon{font-size:32px;margin-bottom:8px}
-.upload-option-text{font-size:12px;color:#888}
+.preview-item .remove{position:absolute;top:6px;right:6px;width:28px;height:28px;background:rgba(0,0,0,0.7);border-radius:50%;border:none;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.preview-item .badge{position:absolute;bottom:6px;left:6px;background:rgba(0,0,0,0.7);color:#fff;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600}
+
+/* Progress */
+.progress-section{margin:20px 0}
+.progress-bar{width:100%;height:6px;background:#333;border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#FF6B35,#FF8F5A);transition:width 0.3s;border-radius:3px}
+.progress-text{color:#888;font-size:13px;margin-top:8px}
+
+/* Reveal Info */
+.reveal-card{background:rgba(255,107,53,0.1);border:1px solid rgba(255,107,53,0.3);border-radius:16px;padding:20px;margin:16px 0;text-align:left}
+.reveal-card h3{color:#FF6B35;font-size:13px;font-weight:700;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px}
+.reveal-card p{color:#ccc;font-size:14px;line-height:1.6}
+.reveal-badge{display:inline-block;background:#4CAF50;color:#fff;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;margin-bottom:12px}
+.countdown{font-size:28px;color:#FF6B35;font-weight:800;margin:8px 0}
+.gallery-link{background:#2a2a2a;border-radius:10px;padding:14px;margin-top:14px;word-break:break-all;font-size:12px;color:#888}
+.copy-btn{background:#FF6B35;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;margin-top:10px}
+
+/* Success */
+.success-icon{font-size:72px;margin-bottom:16px}
+.success-title{font-size:24px;font-weight:700;margin-bottom:8px}
 </style>
 </head>
 <body>
 <div class="container">
 <div class="logo">📸</div>
 <h1 id="eventTitle">FilmRoll</h1>
-<p style="color:#888;margin-bottom:24px" id="subtitle">Loading...</p>
+<p class="subtitle" id="subtitle">Loading...</p>
 
 <div id="loading" class="loading">Loading event...</div>
 <div id="error" class="hidden error"></div>
 
+<!-- Join Form -->
 <div id="joinForm" class="hidden card">
-<input type="text" id="guestName" placeholder="Your name">
-<button class="btn" onclick="joinEvent()">Join Event</button>
+<input type="text" id="guestName" placeholder="Enter your name">
+<button class="btn btn-primary" onclick="joinEvent()">Join Event</button>
 </div>
 
+<!-- Upload Form -->
 <div id="uploadForm" class="hidden">
 <div class="card">
-<div class="shots" id="shots">0</div>
-<p style="color:#888">photos remaining</p>
+<div class="shots-display">
+<div class="shots-number" id="shots">0</div>
+<div class="shots-label">photos remaining</div>
 </div>
 
-<div id="revealInfo" class="reveal-info hidden">
-<h3>📅 WHEN CAN I SEE THE PHOTOS?</h3>
+<!-- THE SNAP BUTTON -->
+<button class="snap-btn" id="snapBtn" onclick="document.getElementById('fileInput').click()">
+<span class="icon">📷</span>
+<span>Snap</span>
+</button>
+<p class="snap-hint">Select photos & videos from your gallery</p>
+
+<!-- Hidden file input - accepts photos AND videos, multiple selection -->
+<input type="file" id="fileInput" accept="image/*,video/*" multiple style="display:none" onchange="handleFileSelect(event)">
+</div>
+
+<!-- Reveal Info -->
+<div id="revealInfo" class="reveal-card hidden">
+<h3>📅 When can I see the photos?</h3>
 <div id="revealContent"></div>
 </div>
 
+<!-- Preview Section (shown after selection) -->
+<div id="previewSection" class="preview-section hidden">
 <div class="card">
-<!-- Upload Options -->
-<div class="upload-options">
-<div class="upload-option active" onclick="setUploadMode('camera')" id="optCamera">
-<div class="upload-option-icon">📷</div>
-<div class="upload-option-text">Take Photo</div>
+<div class="preview-grid" id="previewGrid"></div>
+<div id="progressSection" class="progress-section hidden">
+<div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+<p class="progress-text" id="progressText">Uploading...</p>
 </div>
-<div class="upload-option" onclick="setUploadMode('gallery')" id="optGallery">
-<div class="upload-option-icon">🖼️</div>
-<div class="upload-option-text">From Gallery</div>
+<button class="btn btn-primary" id="sendBtn" onclick="uploadFiles()">Send</button>
+<button class="btn btn-secondary" onclick="clearSelection()">Cancel</button>
 </div>
-</div>
-
-<div class="upload-area" id="uploadArea" onclick="triggerFileInput()">
-<div style="font-size:48px" id="uploadIcon">📷</div>
-<p id="uploadText">Tap to take photo</p>
-</div>
-
-<!-- Camera input (single photo) -->
-<input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" onchange="selectFiles(event)">
-<!-- Gallery input (multiple photos/videos) -->
-<input type="file" id="galleryInput" accept="image/*,video/*" multiple style="display:none" onchange="selectFiles(event)">
-
-<!-- Preview Grid -->
-<div id="previewGrid" class="preview-grid hidden"></div>
-
-<!-- Progress Bar -->
-<div id="progressContainer" class="hidden">
-<div class="progress-bar"><div class="progress-bar-fill" id="progressBar"></div></div>
-<p id="progressText" style="font-size:13px;color:#888">Uploading...</p>
-</div>
-
-<button class="btn" id="uploadBtn" onclick="uploadFiles()" disabled>Send Photo</button>
 </div>
 </div>
 
+<!-- Success Message -->
 <div id="successMsg" class="hidden card">
-<div style="font-size:64px">✅</div>
-<h2 id="successTitle">Photo Sent!</h2>
-<div id="successRevealInfo" class="reveal-info" style="margin-top:16px"></div>
-<button class="btn" onclick="reset()" style="margin-top:16px">Upload More</button>
-<button class="btn btn-secondary" onclick="viewGallery()" style="margin-top:8px" id="viewGalleryBtn">View Gallery</button>
+<div class="success-icon">✅</div>
+<h2 class="success-title" id="successTitle">Uploaded!</h2>
+<div id="successRevealInfo" class="reveal-card"></div>
+<button class="btn btn-primary" onclick="reset()" style="margin-top:20px">Upload More</button>
+<button class="btn btn-secondary" onclick="viewGallery()" id="viewGalleryBtn">View Gallery</button>
 </div>
 </div>
 
@@ -121,26 +146,15 @@ const JOIN_CODE = new URLSearchParams(window.location.search).get('code') || '';
 const SUPABASE_URL = 'https://zcsuxholzvaidksgxqzi.supabase.co';
 const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpjc3V4aG9senZhaWRrc2d4cXppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2MjU5MjcsImV4cCI6MjA4MTIwMTkyN30.XuJqC8xso2nD3aaO0EMe7vIy67UVgQVD7_kkdE6wUDo';
 
-let API_KEY = '';
-let EVENT_ID = '';
-let LIMIT = 10;
-let REVEAL_MODE = 'instant';
-let REVEAL_TIME = null;
-let IS_REVEALED = false;
-let participantId = null;
-let shots = 0;
-let selectedFiles = [];
-let uploadMode = 'camera'; // 'camera' or 'gallery'
+let EVENT_ID = '', LIMIT = 10, REVEAL_MODE = 'instant', REVEAL_TIME = null, IS_REVEALED = false;
+let participantId = null, shots = 0, selectedFiles = [];
 
 async function init() {
-  if (!JOIN_CODE) {
-    showError('No event code. Add ?code=YOURCODE to the URL');
-    return;
-  }
+  if (!JOIN_CODE) { showError('No event code provided'); return; }
 
   try {
-    const res = await fetch(SUPABASE_URL + '/functions/v1/webUpload/' + JOIN_CODE, {
-      headers: { 'apikey': ANON_KEY, 'Authorization': 'Bearer ' + ANON_KEY }
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/webUpload/${JOIN_CODE}`, {
+      headers: { 'apikey': ANON_KEY, 'Authorization': `Bearer ${ANON_KEY}` }
     });
     const data = await res.json();
     
@@ -151,14 +165,13 @@ async function init() {
     REVEAL_MODE = data.event.revealMode || 'instant';
     REVEAL_TIME = data.event.revealTime;
     IS_REVEALED = data.event.isRevealed || false;
-    API_KEY = data.apiKey;
     
     document.getElementById('eventTitle').textContent = data.event.title;
-    document.getElementById('subtitle').textContent = 'Upload photos from your browser';
+    document.getElementById('subtitle').textContent = 'Upload photos & videos';
     document.getElementById('loading').classList.add('hidden');
 
-    participantId = localStorage.getItem('p_' + EVENT_ID);
-    shots = parseInt(localStorage.getItem('s_' + EVENT_ID) || '0');
+    participantId = localStorage.getItem(`p_${EVENT_ID}`);
+    shots = parseInt(localStorage.getItem(`s_${EVENT_ID}`) || '0');
 
     if (participantId) {
       document.getElementById('uploadForm').classList.remove('hidden');
@@ -172,80 +185,37 @@ async function init() {
   }
 }
 
-function setUploadMode(mode) {
-  uploadMode = mode;
-  document.getElementById('optCamera').classList.toggle('active', mode === 'camera');
-  document.getElementById('optGallery').classList.toggle('active', mode === 'gallery');
-  
-  if (mode === 'camera') {
-    document.getElementById('uploadIcon').textContent = '📷';
-    document.getElementById('uploadText').textContent = 'Tap to take photo';
-  } else {
-    document.getElementById('uploadIcon').textContent = '🖼️';
-    document.getElementById('uploadText').textContent = 'Tap to select photos & videos';
-  }
-}
-
-function triggerFileInput() {
-  if (uploadMode === 'camera') {
-    document.getElementById('cameraInput').click();
-  } else {
-    document.getElementById('galleryInput').click();
-  }
-}
-
-function selectFiles(e) {
+function handleFileSelect(e) {
   const files = Array.from(e.target.files);
   const remaining = LIMIT - shots;
   
-  // Limit selection to remaining shots
-  const filesToAdd = files.slice(0, remaining - selectedFiles.length);
-  
-  filesToAdd.forEach(file => {
+  // Add files up to limit
+  files.forEach(file => {
     if (selectedFiles.length < remaining) {
       selectedFiles.push(file);
     }
   });
   
-  updatePreview();
+  if (selectedFiles.length > 0) {
+    showPreview();
+  }
 }
 
-function updatePreview() {
+function showPreview() {
   const grid = document.getElementById('previewGrid');
-  const area = document.getElementById('uploadArea');
-  const btn = document.getElementById('uploadBtn');
-  
-  if (selectedFiles.length === 0) {
-    grid.classList.add('hidden');
-    area.classList.remove('has-files');
-    btn.disabled = true;
-    btn.textContent = 'Send Photo';
-    return;
-  }
-  
-  grid.classList.remove('hidden');
-  area.classList.add('has-files');
-  btn.disabled = false;
-  
-  const photoCount = selectedFiles.filter(f => f.type.startsWith('image/')).length;
-  const videoCount = selectedFiles.filter(f => f.type.startsWith('video/')).length;
-  
-  let btnText = 'Send ';
-  if (photoCount > 0 && videoCount > 0) {
-    btnText += `${photoCount} Photo${photoCount > 1 ? 's' : ''} & ${videoCount} Video${videoCount > 1 ? 's' : ''}`;
-  } else if (videoCount > 0) {
-    btnText += `${videoCount} Video${videoCount > 1 ? 's' : ''}`;
-  } else {
-    btnText += `${photoCount} Photo${photoCount > 1 ? 's' : ''}`;
-  }
-  btn.textContent = btnText;
+  const section = document.getElementById('previewSection');
+  const sendBtn = document.getElementById('sendBtn');
   
   grid.innerHTML = '';
+  
+  let photoCount = 0, videoCount = 0;
+  
   selectedFiles.forEach((file, index) => {
+    const isVideo = file.type.startsWith('video/');
+    if (isVideo) videoCount++; else photoCount++;
+    
     const item = document.createElement('div');
     item.className = 'preview-item';
-    
-    const isVideo = file.type.startsWith('video/');
     
     if (isVideo) {
       const video = document.createElement('video');
@@ -254,7 +224,7 @@ function updatePreview() {
       item.appendChild(video);
       
       const badge = document.createElement('div');
-      badge.className = 'video-badge';
+      badge.className = 'badge';
       badge.textContent = '🎬 Video';
       item.appendChild(badge);
     } else {
@@ -266,152 +236,151 @@ function updatePreview() {
     const removeBtn = document.createElement('button');
     removeBtn.className = 'remove';
     removeBtn.innerHTML = '×';
-    removeBtn.onclick = (e) => { e.stopPropagation(); removeFile(index); };
+    removeBtn.onclick = () => removeFile(index);
     item.appendChild(removeBtn);
     
     grid.appendChild(item);
   });
+  
+  // Update send button text
+  let btnText = 'Send ';
+  if (photoCount > 0 && videoCount > 0) {
+    btnText += `${photoCount} Photo${photoCount > 1 ? 's' : ''} & ${videoCount} Video${videoCount > 1 ? 's' : ''}`;
+  } else if (videoCount > 0) {
+    btnText += `${videoCount} Video${videoCount > 1 ? 's' : ''}`;
+  } else {
+    btnText += `${photoCount} Photo${photoCount > 1 ? 's' : ''}`;
+  }
+  sendBtn.textContent = btnText;
+  
+  section.classList.remove('hidden');
 }
 
 function removeFile(index) {
   selectedFiles.splice(index, 1);
-  updatePreview();
+  if (selectedFiles.length === 0) {
+    clearSelection();
+  } else {
+    showPreview();
+  }
+}
+
+function clearSelection() {
+  selectedFiles = [];
+  document.getElementById('fileInput').value = '';
+  document.getElementById('previewSection').classList.add('hidden');
+  document.getElementById('previewGrid').innerHTML = '';
 }
 
 async function uploadFiles() {
   if (selectedFiles.length === 0 || !participantId) return;
   
-  const btn = document.getElementById('uploadBtn');
-  const progress = document.getElementById('progressContainer');
-  const progressBar = document.getElementById('progressBar');
+  const sendBtn = document.getElementById('sendBtn');
+  const progressSection = document.getElementById('progressSection');
+  const progressFill = document.getElementById('progressFill');
   const progressText = document.getElementById('progressText');
   
-  btn.disabled = true;
-  progress.classList.remove('hidden');
+  sendBtn.disabled = true;
+  progressSection.classList.remove('hidden');
   
-  let uploaded = 0;
-  let failed = 0;
+  let uploaded = 0, failed = 0;
   
   for (let i = 0; i < selectedFiles.length; i++) {
-    const file = selectedFiles[i];
     progressText.textContent = `Uploading ${i + 1} of ${selectedFiles.length}...`;
-    progressBar.style.width = ((i / selectedFiles.length) * 100) + '%';
+    progressFill.style.width = `${((i + 1) / selectedFiles.length) * 100}%`;
     
     const fd = new FormData();
-    fd.append('photo', file);
+    fd.append('photo', selectedFiles[i]);
     fd.append('event_id', EVENT_ID);
     fd.append('participant_id', participantId);
     
     try {
-      const res = await fetch(SUPABASE_URL + '/functions/v1/webUpload', { 
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/webUpload`, { 
         method: 'POST', 
         body: fd,
-        headers: { 'apikey': ANON_KEY, 'Authorization': 'Bearer ' + ANON_KEY }
+        headers: { 'apikey': ANON_KEY, 'Authorization': `Bearer ${ANON_KEY}` }
       });
       const data = await res.json();
-      
-      if (data.success) {
-        uploaded++;
-        shots++;
-      } else {
-        failed++;
-      }
-    } catch (e) {
-      failed++;
-    }
+      if (data.success) { uploaded++; shots++; } else { failed++; }
+    } catch { failed++; }
   }
   
-  localStorage.setItem('s_' + EVENT_ID, shots);
-  progressBar.style.width = '100%';
+  localStorage.setItem(`s_${EVENT_ID}`, shots);
   
   // Show success
-  progress.classList.add('hidden');
   document.getElementById('uploadForm').classList.add('hidden');
   document.getElementById('successMsg').classList.remove('hidden');
   
-  // Update success message
-  const successTitle = document.getElementById('successTitle');
-  if (uploaded > 1) {
-    successTitle.textContent = `${uploaded} Files Uploaded!`;
-  } else {
-    successTitle.textContent = 'Photo Sent!';
-  }
+  const title = document.getElementById('successTitle');
+  title.textContent = uploaded > 1 ? `${uploaded} Files Uploaded!` : 'Photo Sent!';
+  if (failed > 0) title.textContent += ` (${failed} failed)`;
   
-  if (failed > 0) {
-    successTitle.textContent += ` (${failed} failed)`;
-  }
-  
-  // Show reveal info
+  // Success reveal info
+  const galleryUrl = getGalleryUrl();
   const successReveal = document.getElementById('successRevealInfo');
-  const galleryUrl = window.location.origin + window.location.pathname.replace('upload.html', 'gallery.html') + '?code=' + JOIN_CODE;
   
   if (REVEAL_MODE === 'instant' || IS_REVEALED) {
-    successReveal.innerHTML = `<p>📸 Your photos are live! <a href="${galleryUrl}" style="color:#FF6B35">View Gallery →</a></p>`;
+    successReveal.innerHTML = `<p>📸 Your photos are live!</p><a href="${galleryUrl}" style="color:#FF6B35;font-weight:600">View Gallery →</a>`;
     document.getElementById('viewGalleryBtn').classList.remove('hidden');
-  } else if (REVEAL_TIME) {
+  } else {
     const revealDate = new Date(REVEAL_TIME);
-    successReveal.innerHTML = `
-      <p>📅 Photos reveal on <strong>${revealDate.toLocaleDateString()}</strong></p>
-      <p style="font-size:12px;margin-top:8px">Save this link: <span style="color:#FF6B35">${galleryUrl}</span></p>
-    `;
+    successReveal.innerHTML = `<p>📅 Photos reveal on <strong>${revealDate.toLocaleDateString()}</strong></p><p style="font-size:12px;margin-top:8px;color:#888">Save this link: ${galleryUrl}</p>`;
     document.getElementById('viewGalleryBtn').classList.add('hidden');
   }
 }
 
 function showRevealInfo() {
-  const revealInfo = document.getElementById('revealInfo');
-  const revealContent = document.getElementById('revealContent');
-  const galleryUrl = window.location.origin + window.location.pathname.replace('upload.html', 'gallery.html') + '?code=' + JOIN_CODE;
+  const info = document.getElementById('revealInfo');
+  const content = document.getElementById('revealContent');
+  const galleryUrl = getGalleryUrl();
   
   if (REVEAL_MODE === 'instant' || IS_REVEALED) {
-    revealContent.innerHTML = `
-      <span class="instant-badge">✨ Instant Reveal</span>
-      <p>Photos are visible immediately! View them anytime:</p>
+    content.innerHTML = `
+      <span class="reveal-badge">✨ Instant Reveal</span>
+      <p>Photos are visible immediately!</p>
       <div class="gallery-link">${galleryUrl}</div>
       <button class="copy-btn" onclick="copyLink('${galleryUrl}')">📋 Copy Link</button>
     `;
   } else if (REVEAL_TIME) {
     const revealDate = new Date(REVEAL_TIME);
-    const now = new Date();
-    const diff = revealDate - now;
+    const diff = revealDate - new Date();
     
     if (diff <= 0) {
-      revealContent.innerHTML = `
-        <span class="instant-badge">🎉 Photos Revealed!</span>
-        <p>Photos are now visible! View them here:</p>
+      content.innerHTML = `
+        <span class="reveal-badge">🎉 Revealed!</span>
+        <p>Photos are now visible!</p>
         <div class="gallery-link">${galleryUrl}</div>
         <button class="copy-btn" onclick="copyLink('${galleryUrl}')">📋 Copy Link</button>
       `;
     } else {
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const days = Math.floor(diff / 86400000);
+      const hours = Math.floor((diff % 86400000) / 3600000);
+      const mins = Math.floor((diff % 3600000) / 60000);
+      let countdown = '';
+      if (days > 0) countdown += `${days}d `;
+      if (hours > 0) countdown += `${hours}h `;
+      countdown += `${mins}m`;
       
-      let countdownText = '';
-      if (days > 0) countdownText += days + 'd ';
-      if (hours > 0) countdownText += hours + 'h ';
-      countdownText += mins + 'm';
-      
-      revealContent.innerHTML = `
+      content.innerHTML = `
         <p>Photos will be revealed in:</p>
-        <div class="countdown">⏰ ${countdownText}</div>
-        <p style="font-size:12px;color:#888">${revealDate.toLocaleDateString()} at ${revealDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
-        <p style="margin-top:12px">📌 <strong>Save this link</strong> to view photos after reveal:</p>
+        <div class="countdown">⏰ ${countdown}</div>
+        <p style="font-size:12px;color:#888">${revealDate.toLocaleDateString()} at ${revealDate.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</p>
+        <p style="margin-top:12px">📌 <strong>Save this link:</strong></p>
         <div class="gallery-link">${galleryUrl}</div>
         <button class="copy-btn" onclick="copyLink('${galleryUrl}')">📋 Copy Link</button>
       `;
     }
   }
   
-  revealInfo.classList.remove('hidden');
+  info.classList.remove('hidden');
+}
+
+function getGalleryUrl() {
+  return window.location.origin + window.location.pathname.replace('upload.html', 'gallery.html') + '?code=' + JOIN_CODE;
 }
 
 function copyLink(url) {
-  navigator.clipboard.writeText(url).then(() => {
-    alert('Link copied! Save it to view photos later.');
-  }).catch(() => {
-    prompt('Copy this link:', url);
-  });
+  navigator.clipboard.writeText(url).then(() => alert('Link copied!')).catch(() => prompt('Copy this link:', url));
 }
 
 function showError(msg) {
@@ -423,13 +392,9 @@ function showError(msg) {
 async function joinEvent() {
   const name = document.getElementById('guestName').value || 'Guest';
   try {
-    const res = await fetch(SUPABASE_URL + '/functions/v1/joinEvent', {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/joinEvent`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': ANON_KEY,
-        'Authorization': 'Bearer ' + ANON_KEY
-      },
+      headers: { 'Content-Type': 'application/json', 'apikey': ANON_KEY, 'Authorization': `Bearer ${ANON_KEY}` },
       body: JSON.stringify({ join_code: JOIN_CODE, guest_name: name })
     });
     const data = await res.json();
@@ -437,8 +402,8 @@ async function joinEvent() {
     if (data.participant) {
       participantId = data.participant.id;
       shots = data.participant.shots_taken || 0;
-      localStorage.setItem('p_' + EVENT_ID, participantId);
-      localStorage.setItem('s_' + EVENT_ID, shots);
+      localStorage.setItem(`p_${EVENT_ID}`, participantId);
+      localStorage.setItem(`s_${EVENT_ID}`, shots);
       document.getElementById('joinForm').classList.add('hidden');
       document.getElementById('uploadForm').classList.remove('hidden');
       updateShots();
@@ -451,28 +416,24 @@ async function joinEvent() {
   }
 }
 
-function viewGallery() {
-  const galleryUrl = window.location.origin + window.location.pathname.replace('upload.html', 'gallery.html') + '?code=' + JOIN_CODE;
-  window.location.href = galleryUrl;
-}
+function viewGallery() { window.location.href = getGalleryUrl(); }
 
 function reset() {
   selectedFiles = [];
-  document.getElementById('cameraInput').value = '';
-  document.getElementById('galleryInput').value = '';
+  document.getElementById('fileInput').value = '';
+  document.getElementById('previewSection').classList.add('hidden');
   document.getElementById('previewGrid').innerHTML = '';
-  document.getElementById('previewGrid').classList.add('hidden');
-  document.getElementById('uploadArea').classList.remove('has-files');
-  document.getElementById('uploadBtn').disabled = true;
-  document.getElementById('uploadBtn').textContent = 'Send Photo';
-  document.getElementById('progressContainer').classList.add('hidden');
+  document.getElementById('progressSection').classList.add('hidden');
   document.getElementById('successMsg').classList.add('hidden');
   document.getElementById('uploadForm').classList.remove('hidden');
+  document.getElementById('sendBtn').disabled = false;
   updateShots();
 }
 
 function updateShots() {
-  document.getElementById('shots').textContent = LIMIT - shots;
+  const remaining = LIMIT - shots;
+  document.getElementById('shots').textContent = remaining;
+  document.getElementById('snapBtn').disabled = remaining <= 0;
 }
 
 init();
