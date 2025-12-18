@@ -98,7 +98,13 @@ async function init() {
   }
 
   try {
-    const res = await fetch(SUPABASE_URL + '/functions/v1/webUpload/' + JOIN_CODE);
+    const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpjc3V4aG9senZhaWRrc2d4cXppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2MjU5MjcsImV4cCI6MjA4MTIwMTkyN30.XuJqC8xso2nD3aaO0EMe7vIy67UVgQVD7_kkdE6wUDo';
+    const res = await fetch(SUPABASE_URL + '/functions/v1/webUpload/' + JOIN_CODE, {
+      headers: {
+        'apikey': ANON_KEY,
+        'Authorization': 'Bearer ' + ANON_KEY
+      }
+    });
     const data = await res.json();
     
     if (data.error) {
